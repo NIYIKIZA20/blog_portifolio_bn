@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import fs from 'fs';
-import path from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import {join} from 'path';
 import Joi from 'joi';
 import multer from 'multer';
 import dotenv from 'dotenv';
@@ -10,12 +10,12 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5500;
-const DATA_FILE = path.join(__dirname, '../blog.json');
-const UPLOADS_DIR = path.join(__dirname, '../uploads');
+const DATA_FILE = join(__dirname, '../blog.json');
+const UPLOADS_DIR = join(__dirname, '../uploads');
 
 // Ensure uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR);
+if (!existsSync(UPLOADS_DIR)) {
+  mkdirSync(UPLOADS_DIR);
 }
 
 // Multer setup for file uploads
@@ -42,12 +42,12 @@ const blogSchema = Joi.object({
 });
 
 function readBlogs(): Blog[] {
-  if (!fs.existsSync(DATA_FILE)) return [];
-  const data = fs.readFileSync(DATA_FILE, 'utf-8');
+  if (!existsSync(DATA_FILE)) return [];
+  const data = readFileSync(DATA_FILE, 'utf-8');
   return data ? JSON.parse(data) : [];
 }
 function writeBlogs(blogs: Blog[]) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(blogs, null, 2));
+  writeFileSync(DATA_FILE, JSON.stringify(blogs, null, 2));
 }
 
 // CREATE blog (with optional profile photo upload)
