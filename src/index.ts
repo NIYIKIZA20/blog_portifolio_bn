@@ -26,7 +26,14 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname);
   },
 });
-const upload = multer({ storage });
+
+const upload = multer({ 
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed!'));
+  }
+});
 
 app.use(express.json());
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -43,9 +50,15 @@ const blogSchema = Joi.object({
 
 function readBlogs(): Blog[] {
   if (!existsSync(DATA_FILE)) return [];
-  const data = readFileSync(DATA_FILE, 'utf-8');
-  return data ? JSON.parse(data) : [];
+  try {
+    const data = readFileSync(DATA_FILE, 'utf-8');
+    return data ? JSON.parse(data) : [];
+  } catch (err) {
+    console.error('Failed to read or parse blog.json:', err);
+    return [];
+  }
 }
+
 function writeBlogs(blogs: Blog[]) {
   writeFileSync(DATA_FILE, JSON.stringify(blogs, null, 2));
 }
@@ -65,7 +78,7 @@ app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) 
     updated: now,
   });
   if (error) {
-    return res.status(400).json({ error: error.details });
+    return res.status(400).json({ status: 'error', message: error.details.map(d => d.message).join(', ') });
   }
 
   const blogs = readBlogs();
@@ -111,7 +124,7 @@ app.put('/blogs/:id', upload.single('profilePhoto'), (req: Request, res: Respons
     updated: now,
   });
   if (error) {
-    return res.status(400).json({ error: error.details });
+    return res.status(400).json({ status: 'error', message: error.details.map(d => d.message).join(', ') });
   }
 
   blogs[idx] = { ...blogs[idx], ...value };
