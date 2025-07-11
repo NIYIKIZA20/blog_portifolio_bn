@@ -3,10 +3,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import {join} from 'path';
 import Joi from 'joi';
 import multer from 'multer';
-import dotenv from 'dotenv';
+import {config} from 'dotenv';
 import { Blog } from '../types';
 
-dotenv.config();
+config();
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5500;
@@ -81,7 +81,7 @@ app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) 
   }
   const blogs = readBlogs();
   const newBlog: Blog = {
-    id: Math.random().toString(36).substr(2, 9),
+    id: Math.random().toString(36).substr(2, 12),
     ...value,
   };
   blogs.push(newBlog);
