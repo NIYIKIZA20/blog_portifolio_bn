@@ -63,7 +63,6 @@ function writeBlogs(blogs: Blog[]) {
   writeFileSync(DATA_FILE, JSON.stringify(blogs, null, 2));
 }
 
-// CREATE blog (with optional profile photo upload)
 app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) => {
   const { title, name, description } = req.body;
   const file = req.file;
@@ -80,7 +79,6 @@ app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) 
   if (error) {
     return res.status(400).json({ status: 'error', message: error.details.map(d => d.message).join(', ') });
   }
-
   const blogs = readBlogs();
   const newBlog: Blog = {
     id: Math.random().toString(36).substr(2, 9),
@@ -91,13 +89,12 @@ app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) 
   res.status(201).json(newBlog);
 });
 
-// READ all blogs
 app.get('/blogs', (req: Request, res: Response) => {
   const blogs = readBlogs();
   res.json(blogs);
 });
 
-// READ single blog
+
 app.get('/blogs/:id', (req: Request, res: Response) => {
   const blogs = readBlogs();
   const blog = blogs.find(b => b.id === req.params.id);
@@ -105,7 +102,6 @@ app.get('/blogs/:id', (req: Request, res: Response) => {
   res.json(blog);
 });
 
-// UPDATE blog (with optional new profile photo)
 app.put('/blogs/:id', upload.single('profilePhoto'), (req: Request, res: Response) => {
   const blogs = readBlogs();
   const idx = blogs.findIndex(b => b.id === req.params.id);
@@ -126,13 +122,11 @@ app.put('/blogs/:id', upload.single('profilePhoto'), (req: Request, res: Respons
   if (error) {
     return res.status(400).json({ status: 'error', message: error.details.map(d => d.message).join(', ') });
   }
-
   blogs[idx] = { ...blogs[idx], ...value };
   writeBlogs(blogs);
   res.json(blogs[idx]);
 });
 
-// DELETE blog
 app.delete('/blogs/:id', (req: Request, res: Response) => {
   const blogs = readBlogs();
   const idx = blogs.findIndex(b => b.id === req.params.id);
