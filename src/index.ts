@@ -3,13 +3,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import {join} from 'path';
 import Joi from 'joi';
 import multer from 'multer';
-import {config} from 'dotenv';
 import { Blog } from '../types';
 
-config();
+
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5500;
 const DATA_FILE = join(__dirname, '../blog.json');
 const UPLOADS_DIR = join(__dirname, '../uploads');
 
