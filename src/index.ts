@@ -2,14 +2,16 @@ import express, { Request, Response } from 'express';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import {join} from 'path';
 import Joi from 'joi';
+import { Router } from 'express';
 import multer from 'multer';
 import { Blog } from '../types';
 
 
-
+const  blogRouter = Router();
 const app = express();
 const DATA_FILE = join(__dirname, '../blog.json');
 const UPLOADS_DIR = join(__dirname, '../uploads');
+
 
 // Ensure uploads directory exists
 if (!existsSync(UPLOADS_DIR)) {
@@ -33,7 +35,6 @@ const upload = multer({
   }
 });
 
-app.use(express.json());
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Joi schema for validation
@@ -61,7 +62,7 @@ function writeBlogs(blogs: Blog[]) {
   writeFileSync(DATA_FILE, JSON.stringify(blogs, null, 2));
 }
 
-app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) => {
+blogRouter.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) => {
   const { title, name, description } = req.body;
   const file = req.file;
   const now = new Date().toISOString();
@@ -87,20 +88,20 @@ app.post('/blogs', upload.single('profilePhoto'), (req: Request, res: Response) 
   res.status(201).json(newBlog);
 });
 
-app.get('/blogs', (req: Request, res: Response) => {
+blogRouter.get('/blogs', (req: Request, res: Response) => {
   const blogs = readBlogs();
   res.json(blogs);
 });
 
 
-app.get('/blogs/:id', (req: Request, res: Response) => {
+blogRouter.get('/blogs/:id', (req: Request, res: Response) => {
   const blogs = readBlogs();
   const blog = blogs.find(b => b.id === req.params.id);
   if (!blog) return res.status(404).json({ error: 'Blog not found' });
   res.json(blog);
 });
 
-app.put('/blogs/:id', upload.single('profilePhoto'), (req: Request, res: Response) => {
+blogRouter.put('/blogs/:id', upload.single('profilePhoto'), (req: Request, res: Response) => {
   const blogs = readBlogs();
   const idx = blogs.findIndex(b => b.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Blog not found' });
@@ -125,7 +126,7 @@ app.put('/blogs/:id', upload.single('profilePhoto'), (req: Request, res: Respons
   res.json(blogs[idx]);
 });
 
-app.delete('/blogs/:id', (req: Request, res: Response) => {
+blogRouter.delete('/blogs/:id', (req: Request, res: Response) => {
   const blogs = readBlogs();
   const idx = blogs.findIndex(b => b.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Blog not found' });
@@ -133,5 +134,7 @@ app.delete('/blogs/:id', (req: Request, res: Response) => {
   writeBlogs(blogs);
   res.json({ message: 'Blog deleted', blog: deleted });
 });
+
+export { blogRouter };
 
  
