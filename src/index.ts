@@ -4,7 +4,7 @@ import {join} from 'path';
 import Joi from 'joi';
 import { Router } from 'express';
 import multer from 'multer';
-import { Blog } from '../types';
+import { Blog } from './types/types';
 
 
 const  blogRouter = Router();
