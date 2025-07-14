@@ -41,7 +41,9 @@ export class BlogController {
 
   // Get all blogs
   static getAllBlogs = (req: Request, res: Response) => {
-    const blogs = readBlogs();
+
+    const blogs = readBlogs()
+    //const blogs = readBlogs();
     return sendSuccessResponse(res, blogs);
   };
 

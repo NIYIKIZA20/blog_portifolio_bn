@@ -6,4 +6,5 @@ export interface Blog {
   profilePhoto?: string;
   created: string;
   updated: string;
+  //deteteAt?: string;    i need add this too
 } 

@@ -4,12 +4,10 @@ import { join } from 'path';
 
 const UPLOADS_DIR = join(__dirname, '../../uploads');
 
-// Ensure uploads directory exists
 if (!existsSync(UPLOADS_DIR)) {
   mkdirSync(UPLOADS_DIR);
 }
 
-// Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),
   filename: (req, file, cb) => {
