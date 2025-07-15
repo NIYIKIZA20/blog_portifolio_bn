@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface Blog {
-  id: string;
   title: string;
   name: string;
   description: string;
@@ -11,6 +10,7 @@ export interface Blog {
   //deteteAt?: string;    i need add this too
 }
 
+// Note: Use _id from mongoose Document. If you want to return 'id' in API responses, map _id to id in controllers.
 export interface BlogDocument extends Blog, Document {}
 
 const BlogSchema = new Schema<BlogDocument>({

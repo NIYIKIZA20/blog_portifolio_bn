@@ -1,109 +1,147 @@
 import { Request, Response } from 'express';
 import { blogSchema } from '../schema/blogsSchema';
-import { readBlogs, writeBlogs, generateId } from '../utils/helper';
 import { sendSuccessResponse, sendErrorResponse, sendNotFoundResponse, sendCreatedResponse } from '../utils/response';
 import { upload } from '../middleware/upload';
-import { Blog } from '../types/types';
+import { BlogModel } from '../types/types';
+import mongoose from 'mongoose';
+
+function isValidObjectId(id: string) {
+  return mongoose.Types.ObjectId.isValid(id);
+}
+
+function mapBlog(blog: any) {
+  if (!blog) return blog;
+  const obj = blog.toObject ? blog.toObject() : blog;
+  obj.id = obj._id;
+  delete obj._id;
+  delete obj.__v;
+  return obj;
+}
 
 export class BlogController {
   // Create a new blog
   static createBlog = [
     upload.single('profilePhoto'),
-    (req: Request, res: Response) => {
-      const { title, name, description } = req.body;
-      const file = req.file;
-      const now = new Date().toISOString();
+    async (req: Request, res: Response) => {
+      try {
+        const { title, name, description } = req.body;
+        const file = req.file;
+        const now = new Date().toISOString();
 
-      const { error, value } = blogSchema.validate({
-        title,
-        name,
-        description,
-        profilePhoto: file ? `/uploads/${file.filename}` : undefined,
-        created: now,
-        updated: now,
-      });
+        const { error, value } = blogSchema.validate({
+          title,
+          name,
+          description,
+          profilePhoto: file ? `/uploads/${file.filename}` : undefined,
+          created: now,
+          updated: now,
+        });
 
-      if (error) {
-        return sendErrorResponse(res, error.details.map(d => d.message).join(', '));
+        if (error) {
+          return sendErrorResponse(res, error.details.map(d => d.message).join(', '), 400, 'VALIDATION_ERROR');
+        }
+
+        const newBlog = await BlogModel.create(value);
+        return sendCreatedResponse(res, {
+          message: 'Blog created successfully',
+          blog: mapBlog(newBlog),
+        });
+      } catch (err: any) {
+        return sendErrorResponse(res, err.message || 'Failed to create blog', 500, 'DB_ERROR');
       }
-
-      const blogs = readBlogs();
-      const newBlog: Blog = {
-        id: generateId(),
-        ...value,
-      };
-      
-      blogs.push(newBlog);
-      writeBlogs(blogs);
-      return sendCreatedResponse(res, newBlog);
     }
   ];
 
   // Get all blogs
-  static getAllBlogs = (req: Request, res: Response) => {
-
-    const blogs = readBlogs()
-    //const blogs = readBlogs();
-    return sendSuccessResponse(res, blogs);
+  static getAllBlogs = async (req: Request, res: Response) => {
+    try {
+      const blogs = await BlogModel.find();
+      return sendSuccessResponse(res, {
+        message: 'Blogs fetched successfully',
+        blogs: blogs.map(mapBlog),
+      });
+    } catch (err: any) {
+      return sendErrorResponse(res, err.message || 'Failed to fetch blogs', 500, 'DB_ERROR');
+    }
   };
 
   // Get blog by ID
-  static getBlogById = (req: Request, res: Response) => {
-    const blogs = readBlogs();
-    const blog = blogs.find(b => b.id === req.params.id);
-    
-    if (!blog) {
-      return sendNotFoundResponse(res, 'Blog not found');
+  static getBlogById = async (req: Request, res: Response) => {
+    if (!isValidObjectId(req.params.id)) {
+      return sendErrorResponse(res, 'Invalid blog ID', 400, 'INVALID_ID');
     }
-    
-    return sendSuccessResponse(res, blog);
+    try {
+      const blog = await BlogModel.findById(req.params.id);
+      if (!blog) {
+        return sendNotFoundResponse(res, 'Blog not found');
+      }
+      return sendSuccessResponse(res, {
+        message: 'Blog fetched successfully',
+        blog: mapBlog(blog),
+      });
+    } catch (err: any) {
+      return sendErrorResponse(res, err.message || 'Failed to fetch blog', 500, 'DB_ERROR');
+    }
   };
 
   // Update blog
   static updateBlog = [
     upload.single('profilePhoto'),
-    (req: Request, res: Response) => {
-      const blogs = readBlogs();
-      const idx = blogs.findIndex(b => b.id === req.params.id);
-      
-      if (idx === -1) {
-        return sendNotFoundResponse(res, 'Blog not found');
+    async (req: Request, res: Response) => {
+      if (!isValidObjectId(req.params.id)) {
+        return sendErrorResponse(res, 'Invalid blog ID', 400, 'INVALID_ID');
       }
+      try {
+        const blog = await BlogModel.findById(req.params.id);
+        if (!blog) {
+          return sendNotFoundResponse(res, 'Blog not found');
+        }
 
-      const { title, name, description } = req.body;
-      const file = req.file;
-      const now = new Date().toISOString();
+        const { title, name, description } = req.body;
+        const file = req.file;
+        const now = new Date().toISOString();
 
-      const { error, value } = blogSchema.validate({
-        title: title ?? blogs[idx].title,
-        name: name ?? blogs[idx].name,
-        description: description ?? blogs[idx].description,
-        profilePhoto: file ? `/uploads/${file.filename}` : blogs[idx].profilePhoto,
-        created: blogs[idx].created,
-        updated: now,
-      });
+        const { error, value } = blogSchema.validate({
+          title: title ?? blog.title,
+          name: name ?? blog.name,
+          description: description ?? blog.description,
+          profilePhoto: file ? `/uploads/${file.filename}` : blog.profilePhoto,
+          created: blog.created,
+          updated: now,
+        });
 
-      if (error) {
-        return sendErrorResponse(res, error.details.map(d => d.message).join(', '));
+        if (error) {
+          return sendErrorResponse(res, error.details.map(d => d.message).join(', '), 400, 'VALIDATION_ERROR');
+        }
+
+        blog.set(value);
+        await blog.save();
+        return sendSuccessResponse(res, {
+          message: 'Blog updated successfully',
+          blog: mapBlog(blog),
+        });
+      } catch (err: any) {
+        return sendErrorResponse(res, err.message || 'Failed to update blog', 500, 'DB_ERROR');
       }
-
-      blogs[idx] = { ...blogs[idx], ...value };
-      writeBlogs(blogs);
-      return sendSuccessResponse(res, blogs[idx]);
     }
   ];
 
   // Delete blog
-  static deleteBlog = (req: Request, res: Response) => {
-    const blogs = readBlogs();
-    const idx = blogs.findIndex(b => b.id === req.params.id);
-    
-    if (idx === -1) {
-      return sendNotFoundResponse(res, 'Blog not found');
+  static deleteBlog = async (req: Request, res: Response) => {
+    if (!isValidObjectId(req.params.id)) {
+      return sendErrorResponse(res, 'Invalid blog ID', 400, 'INVALID_ID');
     }
-    
-    const [deleted] = blogs.splice(idx, 1);
-    writeBlogs(blogs);
-    return sendSuccessResponse(res, { message: 'Blog deleted', blog: deleted });
+    try {
+      const blog = await BlogModel.findByIdAndDelete(req.params.id);
+      if (!blog) {
+        return sendNotFoundResponse(res, 'Blog not found');
+      }
+      return sendSuccessResponse(res, {
+        message: 'Blog deleted successfully',
+        blog: mapBlog(blog),
+      });
+    } catch (err: any) {
+      return sendErrorResponse(res, err.message || 'Failed to delete blog', 500, 'DB_ERROR');
+    }
   };
 }
