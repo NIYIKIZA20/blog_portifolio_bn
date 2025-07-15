@@ -4,6 +4,7 @@ import { sendSuccessResponse, sendErrorResponse, sendNotFoundResponse, sendCreat
 import { upload } from '../middleware/upload';
 import { BlogModel } from '../types/types';
 import mongoose from 'mongoose';
+import { stack } from 'sequelize/types/utils';
 
 function isValidObjectId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
@@ -52,7 +53,6 @@ export class BlogController {
     }
   ];
 
-  // Get all blogs
   static getAllBlogs = async (req: Request, res: Response) => {
     try {
       const blogs = await BlogModel.find();
@@ -65,7 +65,6 @@ export class BlogController {
     }
   };
 
-  // Get blog by ID
   static getBlogById = async (req: Request, res: Response) => {
     if (!isValidObjectId(req.params.id)) {
       return sendErrorResponse(res, 'Invalid blog ID', 400, 'INVALID_ID');

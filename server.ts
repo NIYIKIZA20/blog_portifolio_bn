@@ -7,10 +7,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   throw new Error('MONGODB_URI is not set in environment variables!');
 }
-const port = parseInt(process.env.PORT as string || "5500");
-
-// DEBUG: Log the MongoDB URI (do not log credentials in production!)
-console.log('Connecting to MongoDB with URI:');
+const port = parseInt(process.env.PORT as string || "5000");
 
 mongoose.connect(MONGODB_URI)
   .then(() => {
@@ -25,8 +22,6 @@ mongoose.connect(MONGODB_URI)
   });
 
 //import { blogRouter } from "./src"
-
-
 // dev
 //  production
 // test
