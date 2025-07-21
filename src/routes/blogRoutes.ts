@@ -9,9 +9,9 @@ import {
 import { ValidationMiddleware } from "../middleware/validationMiddleware";
 import { AddBlogSchema, UpdateBlogSchema, BlogParamsSchema } from '../schemas/blogSchema';
 import { authMiddleware, checkRole } from "../middleware/authMiddleware";
-import { storage } from "../utils/upload";
+//import { storage } from "../utils/upload";
 import multer from "multer";
-const uploadMiddleware = multer({storage})
+//const uploadMiddleware = multer({storage})
 const blogRouter = Router();
 
 blogRouter.get('/blogs', getAllBlogs);
@@ -21,13 +21,22 @@ blogRouter.get('/blogs/:id',
     getBlog
 );
 
-blogRouter.post('/blogs',
-    authMiddleware,
-    checkRole(['admin']),
-    uploadMiddleware.single('image'),
-    ValidationMiddleware({ type: 'body', schema: AddBlogSchema, refType: 'joi' }),
-    createBlog
+
+
+const upload = multer({ dest: 'uploads/' }); // Temporary local storage
+
+blogRouter.post('/blogs', 
+  upload.single('image'), // 'image' is the field name
+  ValidationMiddleware({ type: 'body', schema: AddBlogSchema, refType: 'joi' }),
+  createBlog
 );
+// blogRouter.post('/blogs',
+//     authMiddleware,
+//     checkRole(['admin']),
+//     uploadMiddleware.single('image'),
+//     ValidationMiddleware({ type: 'body', schema: AddBlogSchema, refType: 'joi' }),
+//     createBlog
+// );
 
 blogRouter.put('/blogs/:id',
     authMiddleware,

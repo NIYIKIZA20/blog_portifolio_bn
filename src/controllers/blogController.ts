@@ -99,12 +99,20 @@ export const createBlog = async (req: IRequestBlog, res: Response) => {
        
         const { title, description, isPublished, content } = req.body;
         // const image_url = await uploadFile(file as Express.Multer.File)
-        const newBlog =new blogModel({
+        
+        let blog_image_url = "";
+        if (file) {
+            // Upload to Cloudinary and get the URL
+            blog_image_url = await uploadFile(file as Express.Multer.File);
+        }
+        const newBlog = new blogModel({
             title,
             description,
             isPublished,
             content,
-            blog_image_url:file?.path
+            blog_image_url,//: file?.path,
+            author: author?._id,
+            createdAt: new Date(),
         })
         await newBlog.save()
        
