@@ -23,6 +23,7 @@ export const uploadFile = async (file: Express.Multer.File): Promise<string> => 
   });
   return result.secure_url;
 };
+
 // export const uploadFile = (file: Express.Multer.File): Promise<String> => {
 //   return new Promise((resolve, reject) => {
 //     const buffer = file?.buffer || Buffer.from("");
